@@ -31,6 +31,8 @@ namespace hlp
 		g_pAppState->pSceneState->Cam.HorizontalFOVDeg = HLP_DEFAULT_HFOV;
 		g_pAppState->pSceneState->Cam.NearPlane = HLP_DEFAULT_NEAR_PLANE;
 		g_pAppState->pSceneState->Cam.FarPlane = HLP_DEFAULT_FAR_PLANE;
+		g_pAppState->pSceneState->Cam.Azimuth = HLP_DEFAULT_AZIMUTH;
+		g_pAppState->pSceneState->Cam.Elevation = HLP_DEFAULT_ELEVATION;
 	}
 
 	U0 InitApp()
@@ -70,6 +72,7 @@ namespace hlp
 		g_pAppState->DefaultRight = HLP_DEFAULT_DEFAULT_RIGHT;
 		g_pAppState->DefaultUp = HLP_DEFAULT_DEFAULT_UP;
 		g_pAppState->DeltaTime = HLP_DEFAULT_DTIME;				
+		g_pAppState->MouseSens = HLP_DEFAULT_MOUSE_SENS;
 
 		LoadResources(g_pAppState);
 		InitRenderState();
@@ -117,7 +120,7 @@ namespace hlp
 		PrintCam(g_pAppState->pSceneState->Cam);
 		while (true)
 		{
-			//UpdateState(g_pAppState);
+			UpdateState(g_pAppState);
 			//PrintCam(g_pAppState->pSceneState->Cam);
 			if (HandleMsg(g_pAppState))
 			{

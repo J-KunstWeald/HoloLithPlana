@@ -83,14 +83,21 @@ namespace hlp
 		case WM_RBUTTONDOWN:
 		{
 			pInput->bMouseLock = !(pInput->bMouseLock);
+			if (pInput->bMouseLock)
+			{
+				ShowCursor(FALSE);
+			}
+			else
+			{
+				ShowCursor(TRUE);
+			}
 		}break;
 		case WM_MOUSEMOVE:
 		{
-			if (pInput->bMouseLock)
-			{
-				pInput->MouseX = GET_X_LPARAM(lParam);
-				pInput->MouseY = GET_Y_LPARAM(lParam);
-			}
+
+				//pInput->MouseX = GET_X_LPARAM(lParam);
+				//pInput->MouseY = GET_Y_LPARAM(lParam);
+			
 
 
 

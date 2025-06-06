@@ -83,49 +83,55 @@ namespace hlp
 		U32 TotalNumberVerts = 0;
 		U32 TotalNumberIndicies = 0;
 
-		Float3List Ghost90 = LoadFloat3List("../resources/geometry/ghost_non_pcl.txt");
+		Float3List pMeshA = LoadFloat3List("../resources/geometry/OctoCat.txt");
 
 		FMesh* pMeshGhost90 = (FMesh*)malloc(sizeof(FMesh));
-		pMeshGhost90->NumVerts = Ghost90.Length;
-		pMeshGhost90->NumIdx = Ghost90.Length;
+		pMeshGhost90->NumVerts = pMeshA.Length;
+		pMeshGhost90->NumIdx = pMeshA.Length;
 		pMeshGhost90->Verts = (float3*)malloc(pMeshGhost90->NumVerts * sizeof(float3));
 		pMeshGhost90->Normals = (float3*)malloc(pMeshGhost90->NumVerts * sizeof(float3));
 		pMeshGhost90->Idx = (U32*)malloc(pMeshGhost90->NumIdx * sizeof(U32));
-		pMeshGhost90->Color = float4{ 0.8f, 0.2f, 0.1f, 1.0f };
+		pMeshGhost90->Color = float4{ 0.2f, 0.4f, 0.1f, 1.0f };
 
 		for (int i = 0; i < pMeshGhost90->NumVerts; i++)
 		{
-			pMeshGhost90->Verts[i] = Ghost90.Verts[i];
-			pMeshGhost90->Normals[i] = Ghost90.Verts[i];
+			pMeshGhost90->Verts[i] = pMeshA.Verts[i];
+			pMeshGhost90->Normals[i] = pMeshA.Verts[i];
 			pMeshGhost90->Idx[i] = i;
 		}
-		pAppState->pRenderState->TotNumIdx = Ghost90.Length * 2;
-		pAppState->pRenderState->TotNumVerts = Ghost90.Length * 2;
-		free(Ghost90.Verts);
 
-		Float3List Ghost = LoadFloat3List("../resources/geometry/ghost_pcl.txt");
+		TotalNumberVerts += pMeshA.Length;
+		TotalNumberIndicies += pMeshA.Length;
+
+		free(pMeshA.Verts);
+
+		Float3List pMeshB = LoadFloat3List("../resources/geometry/Bunny.txt");
 
 		FMesh* pMeshGhost = (FMesh*)malloc(sizeof(FMesh));
-		pMeshGhost->NumVerts = Ghost90.Length;
-		pMeshGhost->NumIdx = Ghost90.Length;
+		pMeshGhost->NumVerts = pMeshB.Length;
+		pMeshGhost->NumIdx = pMeshB.Length;
 		pMeshGhost->Verts = (float3*)malloc(pMeshGhost->NumVerts * sizeof(float3));
 		pMeshGhost->Normals = (float3*)malloc(pMeshGhost->NumVerts * sizeof(float3));
 		pMeshGhost->Idx = (U32*)malloc(pMeshGhost->NumIdx * sizeof(U32));
-		pMeshGhost->Color = float4{ 0.0f, 0.2f, 0.8f, 1.0f };
+		pMeshGhost->Color = float4{ 0.7f, 0.2f, 0.15f, 1.0f };
 
 		for (int i = 0; i < pMeshGhost->NumVerts; i++)
 		{
-			pMeshGhost->Verts[i] = Ghost.Verts[i];
-			pMeshGhost->Normals[i] = Ghost.Verts[i];
+			pMeshGhost->Verts[i] = pMeshB.Verts[i];
+			pMeshGhost->Normals[i] = pMeshB.Verts[i];
 			pMeshGhost->Idx[i] = i;
 		}
-		free(Ghost.Verts);
+		TotalNumberVerts += pMeshB.Length;
+		TotalNumberIndicies += pMeshB.Length;
+
+		free(pMeshB.Verts);
 
 		pAppState->pSceneState->NumGeometries = 2;
 		pAppState->pSceneState->Geometries = (FSpatialGeometry*)malloc(sizeof(FSpatialGeometry) * 2);
 		pAppState->pSceneState->Geometries[0] = FSpatialGeometry{ pMeshGhost, MESH };
 		pAppState->pSceneState->Geometries[1] = FSpatialGeometry{ pMeshGhost90, MESH };
-
+		pAppState->pRenderState->TotNumVerts = TotalNumberVerts;
+		pAppState->pRenderState->TotNumIdx = TotalNumberIndicies;
 		
 
 	}
@@ -247,15 +253,15 @@ namespace hlp
 	{
 		for (int i = 0; i < pAppState->pSceneState->NumLights; i++)
 		{
-			if (pAppState->pSceneState->Lights[i].Type == POINT)
+			if (pAppState->pSceneState->Lights[i].Type == POINTLIGHT)
 			{
 				free(pAppState->pSceneState->Lights[i].pData.pPointLight);
 			}
-			else if (pAppState->pSceneState->Lights[i].Type == SPOT)
+			else if (pAppState->pSceneState->Lights[i].Type == SPOTLIGHT)
 			{
 				free(pAppState->pSceneState->Lights[i].pData.pSpotLight);
 			}
-			else if (pAppState->pSceneState->Lights[i].Type == DIR)
+			else if (pAppState->pSceneState->Lights[i].Type == DIRLIGHT)
 			{
 				free(pAppState->pSceneState->Lights[i].pData.pDirLight);
 			}

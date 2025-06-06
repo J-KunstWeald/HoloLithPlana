@@ -68,9 +68,9 @@ namespace hlp
 
 	enum ELightType
 	{
-		POINT,
-		SPOT,
-		DIR
+		POINTLIGHT,
+		SPOTLIGHT,
+		DIRLIGHT
 	};
 
 	struct FLight
@@ -88,6 +88,8 @@ namespace hlp
 		F32 HorizontalFOVDeg;
 		F32 NearPlane;
 		F32 FarPlane;
+		F32 Azimuth;
+		F32 Elevation;
 	};
 
 	struct FSceneState
@@ -123,6 +125,8 @@ namespace hlp
 		F32 MouseX;
 		F32 MouseY;
 		bool bMouseLock;
+		F32 DeltaX;
+		F32 DeltaY;
 	};
 
 	struct FAppState

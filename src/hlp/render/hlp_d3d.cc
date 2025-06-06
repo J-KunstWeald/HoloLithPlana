@@ -314,25 +314,33 @@ namespace hlp
 		g_pDevCon->ClearDepthStencilView(g_pDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		// calc VP
-		g_VP = DirectX::XMMatrixTranslation(0.0f, 0.0f, 0.0f) * DirectX::XMMatrixPerspectiveFovLH(
-			(0.4f * 3.14f),
-			pAppState->pSceneState->Cam.AspectRatio,
-			pAppState->pSceneState->Cam.NearPlane,
-			pAppState->pSceneState->Cam.FarPlane
-			) 
-			* 
-			DirectX::XMMatrixLookAtLH(
-			DirectX::XMVectorSet(pAppState->pSceneState->Cam.CameraPosition.x, pAppState->pSceneState->Cam.CameraPosition.y, pAppState->pSceneState->Cam.CameraPosition.z,0.0f),
-			DirectX::XMVectorSet(pAppState->pSceneState->Cam.CameraForward.x, pAppState->pSceneState->Cam.CameraForward.y, pAppState->pSceneState->Cam.CameraForward.z, 0.0f),
+		g_VP = DirectX::XMMatrixLookAtLH(
+				DirectX::XMVectorSet(pAppState->pSceneState->Cam.CameraPosition.x, pAppState->pSceneState->Cam.CameraPosition.y, pAppState->pSceneState->Cam.CameraPosition.z,0.0f),
+				DirectX::XMVectorSet(pAppState->pSceneState->Cam.CameraForward.x, pAppState->pSceneState->Cam.CameraForward.y, pAppState->pSceneState->Cam.CameraForward.z, 0.0f),
 				DirectX::XMVectorSet(pAppState->pSceneState->Cam.CameraUp.x, pAppState->pSceneState->Cam.CameraUp.y, pAppState->pSceneState->Cam.CameraUp.z, 0.0f)
-			);
+				)
+				*
+				DirectX::XMMatrixPerspectiveFovLH(
+				HLP_TO_RADIAN(pAppState->pSceneState->Cam.HorizontalFOVDeg),
+				pAppState->pSceneState->Cam.AspectRatio,
+				pAppState->pSceneState->Cam.NearPlane,
+				pAppState->pSceneState->Cam.FarPlane
+				);
 
 		U32 CurrentVBufIdx = 0;
 		U32 CurrentIBufIdx = 0;
 		FConstBuffer cBuf = { };
 		for (int i = 0; i < pAppState->pSceneState->NumGeometries; i++)
 		{
-			cBuf.mvp = DirectX::XMMatrixTranspose(g_VP);
+			if (i % 2 == 0)
+			{
+				cBuf.mvp = DirectX::XMMatrixTranspose(DirectX::XMMatrixTranslation(0.15f, 0.1f, 2.0f) * g_VP);
+			}
+			else
+			{
+				cBuf.mvp = DirectX::XMMatrixTranspose(g_VP);
+			}
+			
 			g_pDevCon->UpdateSubresource(g_pCBuffer, 0, NULL, &cBuf, 0, 0);
 			g_pDevCon->VSSetConstantBuffers(0, 1, &g_pCBuffer);
 

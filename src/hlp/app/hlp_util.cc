@@ -32,9 +32,9 @@ namespace hlp
 
 	U0 PrintCam(FCamera cam)
 	{
-		printf("CPos\n");
+		printf("\nCPos:\n");
 		PrintFloat3(cam.CameraPosition);
-		printf("FwdPos\n");
+		printf("FwdPos:\n");
 		PrintFloat3(cam.CameraForward);
 	}
 }
