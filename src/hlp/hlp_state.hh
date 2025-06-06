@@ -106,6 +106,9 @@ namespace hlp
 	{
 		bool bNewGeometry;
 		bool bNewLight;
+		bool bChangeRasterizer;
+		bool bRenderSolid;
+		bool bRenderWireframe;
 		I32 MaxFps;
 		I32 TotNumIdx;
 		I32 TotNumVerts;

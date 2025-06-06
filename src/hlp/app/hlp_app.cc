@@ -6,6 +6,7 @@
 #include <malloc.h>
 #include "hlp_logic.hh"
 #include "hlp_util.hh"
+#include "../render/hlp_imgui.hh"
 
 namespace hlp
 {

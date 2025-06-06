@@ -9,6 +9,11 @@ namespace hlp
 	// Constants
 
 #define HLP_MATH_PI 3.14159265359
+#define HLP_MATH_2PI = 6.283185307f;
+#define HLP_MATH_1DIVPI = 0.318309886f;
+#define HLP_MATH_1DIV2PI = 0.159154943f;
+#define HLP_MATH_PIDIV2 = 1.570796327f;
+#define HLP_MATH_PIDIV4 = 0.785398163f;
 
 // ======================================================================================================================================================
 // float3 

@@ -1,6 +1,13 @@
 #include "hlp_window.hh"
 #include "../render/hlp_d3d.hh"
 #include <windows.h>
+
+#include "../imgui/imgui.h"
+#include "../imgui/imgui_impl_win32.h"
+#include "../render/hlp_imgui.hh"
+
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 namespace hlp
 {
 #define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
@@ -8,8 +15,8 @@ namespace hlp
 	// this is the main message handler for the program
 	LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		//if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
-		//	return S_OK;
+		if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+			return S_OK;
 
 		FInputState* pInput = reinterpret_cast<FInputState*>(
 			GetWindowLongPtr(hWnd, GWLP_USERDATA));
@@ -40,10 +47,10 @@ namespace hlp
 				case 'S':
 					pInput->bMoveBackward = true;
 					break;
-				case 'A':
+				case 'D':
 					pInput->bMoveLeft = true;
 					break;
-				case 'D':
+				case 'A':
 					pInput->bMoveRight = true;
 					break;
 				case 'Q':
@@ -62,13 +69,13 @@ namespace hlp
 			case 'W':
 				pInput->bMoveForward = false;
 				break;
-			case 'A':
+			case 'D':
 				pInput->bMoveLeft = false;
 				break;
 			case 'S':
 				pInput->bMoveBackward = false;
 				break;
-			case 'D':
+			case 'A':
 				pInput->bMoveRight = false;
 				break;
 			case 'Q':
@@ -178,6 +185,7 @@ namespace hlp
 		}
 		else
 		{
+			NewImguiFrame(pAppState);
 			Draw(pAppState);
 		}
 		return 0;

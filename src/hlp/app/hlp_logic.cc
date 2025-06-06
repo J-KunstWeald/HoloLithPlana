@@ -90,8 +90,8 @@ namespace hlp
 			int deltaY = mousePos.y - screenCenter.y;
 
 			// Apply to camera
-			pAppState->pSceneState->Cam.Azimuth += deltaX * 0.002f; // tune sensitivity
-			pAppState->pSceneState->Cam.Elevation += deltaY * 0.002f;
+			pAppState->pSceneState->Cam.Azimuth += deltaX * pAppState->MouseSens; // tune sensitivity
+			pAppState->pSceneState->Cam.Elevation += deltaY * pAppState->MouseSens;
 
 			// Clamp pitch
 			pAppState->pSceneState->Cam.Elevation = max(-DirectX::XM_PIDIV2 + 0.01f, min(DirectX::XM_PIDIV2 - 0.01f, pAppState->pSceneState->Cam.Elevation));

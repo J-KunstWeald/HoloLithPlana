@@ -13,7 +13,13 @@
 #include <cmath>
 #include <malloc.h>
 
+#include "../imgui/imgui.h"
+#include "../imgui/imgui_impl_win32.h"
+#include "../imgui/imgui_impl_dx11.h"
+
 #include "../app/hlp_util.hh"
+#include "hlp_imgui.hh"
+
 // 1. Input Assembler(IA) Stage
 // 2. Vertex Shader(VS) Stage
 // 3. Hull Shader(HS) Stage
@@ -63,6 +69,9 @@ namespace hlp
 	// Shader
 	ID3D11VertexShader* g_pVS;
 	ID3D11PixelShader* g_pPS;
+	// Rasterizer States
+	ID3D11RasterizerState* g_pRSWF;
+	ID3D11RasterizerState* g_pRSS;
 
 	DirectX::XMMATRIX g_VP;
 
@@ -99,13 +108,14 @@ namespace hlp
 		//Create our SwapChain
 		g_hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, NULL, NULL,
 			D3D11_SDK_VERSION, &SwapChainDesc, &g_pSwapChain, &g_pDevice, NULL, &g_pDevCon);
-
+		HLP_HANDLE_HRESULT(g_hr);
 		//Create our BackBuffer
 		ID3D11Texture2D* BackBuffer;
 		g_hr = g_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&BackBuffer);
-
+		HLP_HANDLE_HRESULT(g_hr);
 		//Create our Render Target
 		g_hr = g_pDevice->CreateRenderTargetView(BackBuffer, NULL, &g_pBackbuffer);
+		HLP_HANDLE_HRESULT(g_hr);
 		BackBuffer->Release();
 
 		//Describe our Depth/Stencil Buffer
@@ -129,6 +139,41 @@ namespace hlp
 
 		//Set our Render Target
 		g_pDevCon->OMSetRenderTargets(1, &g_pBackbuffer, g_pDepthStencilView);
+	}
+
+	U0 InitRasterStates()
+	{
+		D3D11_RASTERIZER_DESC WFDS;
+		ZeroMemory(&WFDS, sizeof(D3D11_RASTERIZER_DESC));
+		WFDS.FillMode = D3D11_FILL_WIREFRAME;
+		WFDS.CullMode = D3D11_CULL_NONE;
+		g_hr = g_pDevice->CreateRasterizerState(&WFDS, &g_pRSWF);
+		HLP_HANDLE_HRESULT(g_hr);
+
+		D3D11_RASTERIZER_DESC SDS;
+		ZeroMemory(&SDS, sizeof(D3D11_RASTERIZER_DESC));
+		SDS.FillMode = D3D11_FILL_SOLID;
+		SDS.CullMode = D3D11_CULL_BACK;
+		g_hr = g_pDevice->CreateRasterizerState(&SDS, &g_pRSS);
+		HLP_HANDLE_HRESULT(g_hr);
+
+		g_pDevCon->RSSetState(g_pRSS);
+	}
+
+	U0 ChangeRasterizerState(FAppState* pAppState)
+	{
+		if (pAppState->pRenderState->bRenderSolid)
+		{
+			g_pDevCon->RSSetState(g_pRSS);
+			pAppState->pRenderState->bRenderSolid = false;
+		}
+		else if (pAppState->pRenderState->bRenderWireframe)
+		{
+			g_pDevCon->RSSetState(g_pRSWF);
+			pAppState->pRenderState->bRenderWireframe = false;
+		}
+
+		pAppState->pRenderState->bChangeRasterizer = false;
 	}
 
 	U0 InitShaders()
@@ -161,6 +206,7 @@ namespace hlp
 		//Create the Input Layout
 		g_hr = g_pDevice->CreateInputLayout(VertBufInpElemDesc, 3, VS->GetBufferPointer(),
 			VS->GetBufferSize(), &g_pLayout);
+		HLP_HANDLE_HRESULT(g_hr);
 
 		//Set the Input Layout
 		g_pDevCon->IASetInputLayout(g_pLayout);
@@ -268,11 +314,13 @@ namespace hlp
 		Data.pSysMem = pVerts;
 
 		g_hr = g_pDevice->CreateBuffer(&VertexBufferDesc, &Data, &g_pVBuffer);
+		HLP_HANDLE_HRESULT(g_hr);
 
 		//Set the vertex buffer
 		UINT Stride = sizeof(FVertex);
 		UINT Offset = 0;
 		g_pDevCon->IASetVertexBuffers(0, 1, &g_pVBuffer, &Stride, &Offset);
+		HLP_HANDLE_HRESULT(g_hr);
 
 		free(pVerts);
 	}
@@ -295,10 +343,16 @@ namespace hlp
 		ConstBufferDesc.MiscFlags = 0;
 
 		g_hr = g_pDevice->CreateBuffer(&ConstBufferDesc, NULL, &g_pCBuffer);
+		HLP_HANDLE_HRESULT(g_hr);
 	}
 
 	U0 Draw(FAppState* pAppState)
 	{
+		if (pAppState->pRenderState->bChangeRasterizer)
+		{
+			ChangeRasterizerState(pAppState);
+		}
+
 		if (pAppState->pRenderState->bNewGeometry)
 		{
 			UpdateVBuf(pAppState);
@@ -349,6 +403,9 @@ namespace hlp
 			CurrentVBufIdx += pAppState->pSceneState->Geometries[i].pData.pMesh->NumVerts;
 		}
 
+		// Imgui
+		DrawImguiFrame();
+
 		g_pSwapChain->Present(0, 0);
 	}
 
@@ -357,7 +414,9 @@ namespace hlp
 		InitSwpDevDevConDBuf(pAppState);
 		InitShaders();
 		InitViewPort(pAppState);
+		InitRasterStates();
 		InitCBuf(pAppState);
+		InitImgui(&(pAppState->hWnd), g_pDevice, g_pDevCon);
 	}
 
 	U0 CleanUpD3D(U0)
@@ -366,6 +425,8 @@ namespace hlp
 		HLP_HANDLE_HRESULT(g_pSwapChain->SetFullscreenState(FALSE, NULL));
 
 		// close and release all existing COM objects
+		g_pRSS->Release();
+		g_pRSWF->Release();
 		g_pLayout->Release();
 		g_pVS->Release();
 		g_pPS->Release();
@@ -378,8 +439,6 @@ namespace hlp
 		g_pBackbuffer->Release();
 		g_pDevice->Release();
 		g_pDevCon->Release();
-		//ImGui_ImplDX11_Shutdown();
-		//ImGui_ImplWin32_Shutdown();
-		//ImGui::DestroyContext();
+		CleanUpImgui();
 	}
 }
