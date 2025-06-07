@@ -4,6 +4,7 @@
 // settings
 
 #define HLP_SHADER_LOCATION L"..\\resources\\shaders\\shaders.hlsl"
+#define HLP_TEXTURE_LOCATION L"..\\resources\\textures\\tex.jpg"
 #define HLP_MOUSE_SENS 0.001f
 
 #define HLP_HARDCODE_MVP 1

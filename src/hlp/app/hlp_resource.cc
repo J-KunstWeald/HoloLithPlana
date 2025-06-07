@@ -275,4 +275,17 @@ namespace hlp
 		CleanUpLights(pAppState);
 		free(pAppState->pSceneState);
 	}
+
+	U0 AddMesh(const char* Filename, ESpatialGeometryType Type, FAppState* pAS)
+	{
+
+	}
+	U0 RemoveMesh(U32 MeshId, FAppState* pAS)
+	{
+
+	}
+	U0 InitScene(FAppState* pAS)
+	{
+
+	}
 }

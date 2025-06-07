@@ -28,6 +28,7 @@ namespace hlp
 	{
 		FMesh* pMesh;
 		FPointcloud* pPointcloud;
+		U32 GeoId;
 	};
 
 	enum ESpatialGeometryType
@@ -99,6 +100,7 @@ namespace hlp
 		FSpatialGeometry* Geometries;
 		U32 NumLights;
 		U32 NumGeometries;
+		U32 NextGeoId;
 
 	};
 

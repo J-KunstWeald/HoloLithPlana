@@ -1,4 +1,5 @@
 #pragma once
+#include "hlp_state.hh"
 #include "hlp_defines.hh"
 #include "hlp_math.hh"
 
@@ -29,5 +30,6 @@ namespace hlp
 	//	GeoType type;
 	//};
 
+	U0 GetIndexMesh(float3* pFloatList, U32 Length, FMesh* pOut);
 
 }

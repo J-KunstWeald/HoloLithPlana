@@ -13,6 +13,11 @@
 #include <cmath>
 #include <malloc.h>
 
+#include <wincodec.h> 
+#include <wrl/client.h>  
+
+#include <memory>
+
 #include "../imgui/imgui.h"
 #include "../imgui/imgui_impl_win32.h"
 #include "../imgui/imgui_impl_dx11.h"
@@ -43,10 +48,8 @@ namespace hlp
 		F32 x;
 		F32 y;
 		F32 z;
-		F32 r;
-		F32 g;
-		F32 b;
-		F32 a;
+		F32 u;
+		F32 v;
 		F32 nx;
 		F32 ny;
 		F32 nz;
@@ -72,8 +75,158 @@ namespace hlp
 	// Rasterizer States
 	ID3D11RasterizerState* g_pRSWF;
 	ID3D11RasterizerState* g_pRSS;
+	// Texture things
+	ID3D11ShaderResourceView* g_pTextureSRV;
+	ID3D11SamplerState* g_pSampler;
 
 	DirectX::XMMATRIX g_VP;
+
+#define SAFE_RELEASE(p) if(p){ (p)->Release(); (p) = nullptr; }
+
+	HRESULT LoadTextureFromFileWIC(
+		ID3D11Device* device,
+		ID3D11DeviceContext* context,
+		const wchar_t* filename,
+		ID3D11ShaderResourceView** textureView
+	) {
+		IWICImagingFactory* wicFactory = nullptr;
+		IWICBitmapDecoder* decoder = nullptr;
+		IWICBitmapFrameDecode* frame = nullptr;
+		IWICFormatConverter* converter = nullptr;
+		ID3D11Texture2D* texture = nullptr;
+
+		HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+		if (FAILED(hr)) return hr;
+
+		hr = CoCreateInstance(
+			CLSID_WICImagingFactory, nullptr,
+			CLSCTX_INPROC_SERVER,
+			IID_PPV_ARGS(&wicFactory)
+		);
+		if (FAILED(hr)) return hr;
+
+		hr = wicFactory->CreateDecoderFromFilename(
+			filename,
+			nullptr,
+			GENERIC_READ,
+			WICDecodeMetadataCacheOnLoad,
+			&decoder
+		);
+		if (FAILED(hr))
+		{
+			SAFE_RELEASE(texture);
+			SAFE_RELEASE(converter);
+			SAFE_RELEASE(frame);
+			SAFE_RELEASE(decoder);
+			SAFE_RELEASE(wicFactory);
+			return hr;
+		}
+
+		hr = decoder->GetFrame(0, &frame);
+		if (FAILED(hr))
+		{
+			SAFE_RELEASE(texture);
+			SAFE_RELEASE(converter);
+			SAFE_RELEASE(frame);
+			SAFE_RELEASE(decoder);
+			SAFE_RELEASE(wicFactory);
+			return hr;
+		}
+
+		hr = wicFactory->CreateFormatConverter(&converter);
+		if (FAILED(hr))
+		{
+			SAFE_RELEASE(texture);
+			SAFE_RELEASE(converter);
+			SAFE_RELEASE(frame);
+			SAFE_RELEASE(decoder);
+			SAFE_RELEASE(wicFactory);
+			return hr;
+		}
+
+		hr = converter->Initialize(
+			frame,
+			GUID_WICPixelFormat32bppRGBA, // Convert to DXGI_FORMAT_R8G8B8A8_UNORM
+			WICBitmapDitherTypeNone,
+			nullptr,
+			0.0,
+			WICBitmapPaletteTypeCustom
+		);
+		if (FAILED(hr))
+		{
+			SAFE_RELEASE(texture);
+			SAFE_RELEASE(converter);
+			SAFE_RELEASE(frame);
+			SAFE_RELEASE(decoder);
+			SAFE_RELEASE(wicFactory);
+			return hr;
+		}
+
+		UINT width, height;
+		hr = converter->GetSize(&width, &height);
+		if (FAILED(hr))
+		{
+			SAFE_RELEASE(texture);
+			SAFE_RELEASE(converter);
+			SAFE_RELEASE(frame);
+			SAFE_RELEASE(decoder);
+			SAFE_RELEASE(wicFactory);
+			return hr;
+		}
+
+		std::unique_ptr<BYTE[]> pixels(new BYTE[width * height * 4]);
+		hr = converter->CopyPixels(
+			nullptr,
+			width * 4,
+			width * height * 4,
+			pixels.get()
+		);
+		if (FAILED(hr))
+		{
+			SAFE_RELEASE(texture);
+			SAFE_RELEASE(converter);
+			SAFE_RELEASE(frame);
+			SAFE_RELEASE(decoder);
+			SAFE_RELEASE(wicFactory);
+			return hr;
+		}
+
+		// Describe texture
+		D3D11_TEXTURE2D_DESC desc = {};
+		desc.Width = width;
+		desc.Height = height;
+		desc.MipLevels = 1;
+		desc.ArraySize = 1;
+		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		desc.SampleDesc.Count = 1;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+		D3D11_SUBRESOURCE_DATA initData = {};
+		initData.pSysMem = pixels.get();
+		initData.SysMemPitch = width * 4;
+
+		hr = device->CreateTexture2D(&desc, &initData, &texture);
+		if (FAILED(hr))
+		{
+			SAFE_RELEASE(texture);
+			SAFE_RELEASE(converter);
+			SAFE_RELEASE(frame);
+			SAFE_RELEASE(decoder);
+			SAFE_RELEASE(wicFactory);
+			return hr;
+		}
+
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+		srvDesc.Format = desc.Format;
+		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+		srvDesc.Texture2D.MipLevels = 1;
+
+		hr = device->CreateShaderResourceView(texture, &srvDesc, textureView);
+
+		return hr;
+	}
+
 
 	U0 InitSwpDevDevConDBuf(FAppState* pAppState)
 	{
@@ -160,6 +313,28 @@ namespace hlp
 		g_pDevCon->RSSetState(g_pRSS);
 	}
 
+	U0 InitSamplerAndTexture(FAppState* pAS)
+	{
+		g_hr = LoadTextureFromFileWIC(g_pDevice,g_pDevCon,HLP_TEXTURE_LOCATION,&g_pTextureSRV);
+		HLP_HANDLE_HRESULT(g_hr);
+
+		D3D11_SAMPLER_DESC SampDesc;
+		ZeroMemory(&SampDesc, sizeof(SampDesc));
+		SampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		SampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		SampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		SampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		SampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		SampDesc.MinLOD = 0;
+		SampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+		g_hr = g_pDevice->CreateSamplerState(&SampDesc, &g_pSampler);
+		HLP_HANDLE_HRESULT(g_hr);
+
+		g_pDevCon->PSSetShaderResources(0, 1, &g_pTextureSRV);
+		g_pDevCon->PSSetSamplers(0, 1, &g_pSampler);
+	}
+
 	U0 ChangeRasterizerState(FAppState* pAppState)
 	{
 		if (pAppState->pRenderState->bRenderSolid)
@@ -199,8 +374,8 @@ namespace hlp
 		D3D11_INPUT_ELEMENT_DESC VertBufInpElemDesc[] =
 		{
 			{"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-			{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 28, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		};
 
 		//Create the Input Layout
@@ -284,10 +459,8 @@ namespace hlp
 					pAppState->pSceneState->Geometries[i].pData.pMesh->Verts[j].x,
 					pAppState->pSceneState->Geometries[i].pData.pMesh->Verts[j].y,
 					pAppState->pSceneState->Geometries[i].pData.pMesh->Verts[j].z,
-					pAppState->pSceneState->Geometries[i].pData.pMesh->Color.x,
-					pAppState->pSceneState->Geometries[i].pData.pMesh->Color.y,
-					pAppState->pSceneState->Geometries[i].pData.pMesh->Color.z,
-					pAppState->pSceneState->Geometries[i].pData.pMesh->Color.w,
+					0.8f,
+					0.9f,
 					pAppState->pSceneState->Geometries[i].pData.pMesh->Normals[j].x,
 					pAppState->pSceneState->Geometries[i].pData.pMesh->Normals[j].y,
 					pAppState->pSceneState->Geometries[i].pData.pMesh->Normals[j].z,
@@ -416,6 +589,7 @@ namespace hlp
 		InitViewPort(pAppState);
 		InitRasterStates();
 		InitCBuf(pAppState);
+		InitSamplerAndTexture(pAppState);
 		InitImgui(&(pAppState->hWnd), g_pDevice, g_pDevCon);
 	}
 
