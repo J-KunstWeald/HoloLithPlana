@@ -1,7 +1,12 @@
 #pragma once 
 #include "hlp_declarations.hh"
-
+#include <stdio.h>
 // settings
+
+#define HLP_D3D12 1
+#define HLP_D3D12_PS_LOC L"..\\resources\\shaders\\PixelShader.hlsl"
+#define HLP_D3D12_VS_LOC L"..\\resources\\shaders\\VertexShader.hlsl"
+
 
 #define HLP_SHADER_LOCATION L"..\\resources\\shaders\\shaders.hlsl"
 #define HLP_TEXTURE_LOCATION L"..\\resources\\textures\\tex.jpg"
@@ -27,3 +32,5 @@
     } while (0)
 
 #define HLP_ASSERT(a) (assert(a))
+
+#define HLP_RELEASE(p) if(p){ (p)->Release(); (p) = nullptr; }

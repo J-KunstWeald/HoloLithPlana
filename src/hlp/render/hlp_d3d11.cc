@@ -36,7 +36,7 @@
 // 9. Pixel Shader(PS) Stage
 // 10. Output Merger(OM) Stage
 
-namespace hlp
+namespace hlp::d11
 {
 	struct FConstBuffer
 	{
@@ -519,7 +519,7 @@ namespace hlp
 		HLP_HANDLE_HRESULT(g_hr);
 	}
 
-	U0 Draw(FAppState* pAppState)
+	U0 DrawD3D11(FAppState* pAppState)
 	{
 		if (pAppState->pRenderState->bChangeRasterizer)
 		{
@@ -582,7 +582,7 @@ namespace hlp
 		g_pSwapChain->Present(0, 0);
 	}
 
-	U0 InitD3D(FAppState* pAppState)
+	U0 InitD3D11(FAppState* pAppState)
 	{
 		InitSwpDevDevConDBuf(pAppState);
 		InitShaders();
@@ -593,7 +593,7 @@ namespace hlp
 		InitImgui(&(pAppState->hWnd), g_pDevice, g_pDevCon);
 	}
 
-	U0 CleanUpD3D(U0)
+	U0 CleanUpD3D11(U0)
 	{
 		// switch to windowed mode
 		HLP_HANDLE_HRESULT(g_pSwapChain->SetFullscreenState(FALSE, NULL));

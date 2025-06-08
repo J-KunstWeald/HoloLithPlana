@@ -39,7 +39,7 @@ add_executable(${PROJECT_NAME} ${SOURCES}) # for winmain add_executable(${PROJEC
 
 # ===============================================
 # Link Libs
-target_link_libraries(${PROJECT_NAME} PRIVATE "d3d11.lib" "d3dcompiler.lib")
+target_link_libraries(${PROJECT_NAME} PRIVATE "d3d11.lib" "d3dcompiler.lib" "d3d12.lib" "dxgi.lib" "dxguid.lib")
 
 # ===============================================
 # Include dirs

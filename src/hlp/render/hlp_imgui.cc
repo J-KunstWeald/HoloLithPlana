@@ -102,6 +102,10 @@ namespace hlp
 
 	U0 NewImguiFrame(FAppState* pAppState)
 	{
+#if HLP_D3D12
+
+
+#else
 		// New Frame
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
@@ -181,6 +185,8 @@ namespace hlp
 		ImGui::End();
 #else
 		ImGui::ShowDemoWindow();
+#endif
+
 #endif
 	}
 

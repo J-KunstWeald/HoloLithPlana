@@ -1,6 +1,6 @@
 #include "hlp_app.hh"
 #include "hlp_window.hh"
-#include "../render/hlp_d3d.hh"
+#include "../render/hlp_render.hh"
 #include "hlp_resource.hh"
 #include "hlp_init.hh"
 #include <malloc.h>
@@ -16,6 +16,7 @@ namespace hlp
 	{
 		g_pAppState->pRenderState->bNewGeometry = true;
 		g_pAppState->pRenderState->bNewLight = true;
+		g_pAppState->pRenderState->NumFrames = HLP_DEFAULT_D12_NUMFRAMES;
 	}
 
 	U0 InitInputState()
@@ -111,7 +112,7 @@ namespace hlp
 
 	U0 CleanUp()
 	{
-		CleanUpD3D();
+		CleanUpD3D(g_pAppState);
 		CleanUpApp();
 	}
 

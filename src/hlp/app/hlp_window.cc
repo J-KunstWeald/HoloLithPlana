@@ -1,7 +1,6 @@
 #include "hlp_window.hh"
-#include "../render/hlp_d3d.hh"
 #include <windows.h>
-
+#include "../render/hlp_render.hh"
 #include "../imgui/imgui.h"
 #include "../imgui/imgui_impl_win32.h"
 #include "../render/hlp_imgui.hh"
@@ -186,7 +185,7 @@ namespace hlp
 		else
 		{
 			NewImguiFrame(pAppState);
-			Draw(pAppState);
+			DrawD3D(pAppState);
 		}
 		return 0;
 	}

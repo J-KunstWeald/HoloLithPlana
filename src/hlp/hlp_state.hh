@@ -114,6 +114,7 @@ namespace hlp
 		I32 MaxFps;
 		I32 TotNumIdx;
 		I32 TotNumVerts;
+		I32 NumFrames;
 	};
 
 	struct FInputState
