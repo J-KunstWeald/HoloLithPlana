@@ -155,12 +155,25 @@ namespace hlp::d12
 #endif
 		g_hr = CreateDXGIFactory2(FactoryFlags, __uuidof(IDXGIFactory4), reinterpret_cast<void**>(&g_pFactory));
 		HLP_HANDLE_HRESULT(g_hr);
+
+		ID3D12Debug* TempDebug = NULL;
+		g_hr = D3D12GetDebugInterface(IID_PPV_ARGS(&TempDebug));
+		HLP_HANDLE_HRESULT(g_hr);
+		TempDebug->EnableDebugLayer();
+		HLP_RELEASE(TempDebug);
 	}
 
 	U0 InitDevice(FAppState* pAS)
 	{
 		g_hr = D3D12CreateDevice(NULL, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), reinterpret_cast<void**>(&g_pDev));
 		HLP_HANDLE_HRESULT(g_hr);
+
+		ID3D12InfoQueue* info_queue = NULL;
+		g_pDev->QueryInterface(IID_PPV_ARGS(&info_queue));
+		info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+		info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+		info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+		HLP_RELEASE(info_queue);
 	}
 
 	U0 InitCommandQueue(FAppState* pAS)
@@ -556,7 +569,7 @@ namespace hlp::d12
 			&DefaultHeapProps, // a default heap
 			D3D12_HEAP_FLAG_NONE, // no flags
 			&ResDesc, // resource description for a buffer
-			D3D12_RESOURCE_STATE_COPY_DEST, // we will start this heap in the copy destination state since we will copy data
+			D3D12_RESOURCE_STATE_COMMON, // we will start this heap in the copy destination state since we will copy data
 			// from the upload heap to this heap
 			nullptr, // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
 			IID_PPV_ARGS(&g_pVBuf));
@@ -672,7 +685,7 @@ namespace hlp::d12
 			&DefaultHeapProps, // a default heap
 			D3D12_HEAP_FLAG_NONE, // no flags
 			&ResDesc, // resource description for a buffer
-			D3D12_RESOURCE_STATE_COPY_DEST, // we will start this heap in the copy destination state since we will copy data
+			D3D12_RESOURCE_STATE_COMMON, // we will start this heap in the copy destination state since we will copy data
 			// from the upload heap to this heap
 			nullptr, // optimized clear value must be null for this type of resource. used for render targets and depth/stencil buffers
 			IID_PPV_ARGS(&g_pIBuf));
